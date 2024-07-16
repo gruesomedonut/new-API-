@@ -30,3 +30,32 @@ class CRUDPrompt(CRUDBase[Prompts, PromptCreate, PromptUpdate]):
         return session.query(Prompts).offset(skip).limit(limit).all()
 
 prompts = CRUDPrompt(Prompts)
+
+
+
+
+
+from typing import List, Optional
+from uuid import UUID
+
+from sqlalchemy.orm import Session
+
+from app.crud.base import CRUDBase
+from app.models.prompts import Prompts
+from app.schemas.prompts import PromptCreate, PromptUpdate
+
+
+class CRUDPrompt(CRUDBase[Prompts, PromptCreate, PromptUpdate]):
+    def get_by_id(self, session: Session, *, id: UUID) -> Optional[Prompts]:
+        return session.query(Prompts).filter(Prompts.id == id).first()
+
+    def remove_by_id(self, session: Session, *, id: UUID) -> None:
+        obj = self.get_by_id(session, id=id)
+        if obj:
+            session.delete(obj)
+            session.commit()
+
+    def get_multi(self, session: Session, *, skip: int = 0, limit: int = 100) -> List[Prompts]:
+        return session.query(Prompts).offset(skip).limit(limit).all()
+
+prompts = CRUDPrompt(Prompts)
