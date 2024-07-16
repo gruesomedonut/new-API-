@@ -14,3 +14,24 @@ class Prompts(Base):
     smaller_prompt = Column(Text, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+
+
+from sqlalchemy import Column, DateTime, String, Text, JSON, Boolean, UUID, Integer, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.db.base_class import Base
+
+
+class Prompts(Base):
+    id: Mapped[UUID] = mapped_column("id", primary_key=True)
+    version: Mapped[int] = mapped_column("version", nullable=False)
+    name: Mapped[str] = mapped_column("name", String, nullable=False)
+    system_prompt: Mapped[str] = mapped_column("system_prompt", String, nullable=False)
+    prompt: Mapped[str] = mapped_column("prompt", String, nullable=False)
+    metadata_info: Mapped[dict] = mapped_column("metadata_info", JSON, nullable=False)
+    tags: Mapped[list] = mapped_column("tags", JSON, nullable=False)
+    creator_tenant_id: Mapped[str] = mapped_column("creator_tenant_id", String, nullable=False)
+    created_at: Mapped[DateTime] = mapped_column("created_at", DateTime, server_default=func.now())
+    created_by: Mapped[str] = mapped_column("created_by", String, nullable=False)
+    modified_at: Mapped[DateTime] = mapped_column("modified_at", DateTime, server_default=func.now(), onupdate=func.now())
+    modified_by: Mapped[str] = mapped_column("modified_by", String, nullable=False)
