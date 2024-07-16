@@ -1,0 +1,61 @@
+from typing import List
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from app.crud.prompts import prompts
+from app.models.prompts import Prompts
+from app.schemas.prompts import PromptCreate, PromptUpdate
+
+
+class PromptApi:
+    """API interface for managing prompts."""
+    @staticmethod
+    def create_prompt(session: Session, *, prompt_in: PromptCreate) -> Prompts:
+        """Create a new prompt."""
+        return prompts.create(session, obj_in=prompt_in)
+
+    @staticmethod
+    def get_prompt_by_id(session: Session, *, id: int) -> Prompts:
+        """Retrieve a prompt by its ID."""
+        prompt = prompts.get_by_id(session, id=id)
+        if not prompt:
+            raise HTTPException(status_code=404, detail="Prompt not found")
+        return prompt
+
+    @staticmethod
+    def get_prompt_by_category(session: Session, *, category: str) -> Prompts:
+        """Retrieve a prompt by its category."""
+        prompt = prompts.get_by_category(session, category=category)
+        if not prompt:
+            raise HTTPException(status_code=404, detail="Prompt not found")
+        return prompt
+
+    @staticmethod
+    def update_prompt(session: Session, *, id: int, prompt_in: PromptUpdate) -> Prompts:
+        """Update an existing prompt."""
+        db_obj = prompts.get_by_id(session, id=id)
+        if not db_obj:
+            raise HTTPException(status_code=404, detail="Prompt not found")
+        return prompts.update(session, db_obj=db_obj, obj_in=prompt_in)
+
+    @staticmethod
+    def delete_prompt_by_id(session: Session, *, id: int) -> None:
+        """Delete a prompt by its ID."""
+        prompt = prompts.get_by_id(session, id=id)
+        if not prompt:
+            raise HTTPException(status_code=404, detail="Prompt not found")
+        prompts.remove_by_id(session, id=id)
+
+    @staticmethod
+    def delete_prompt_by_category(session: Session, *, category: str) -> None:
+        """Delete prompts by their category."""
+        prompt = prompts.get_by_category(session, category=category)
+        if not prompt:
+            raise HTTPException(status_code=404, detail="Prompt not found")
+        prompts.remove_by_category(session, category=category)
+
+    @staticmethod
+    def get_all_prompts(session: Session) -> List[Prompts]:
+        """Retrieve all prompts."""
+        return prompts.get_multi(session)
