@@ -35,3 +35,20 @@ class Prompts(Base):
     created_by: Mapped[str] = mapped_column("created_by", String, nullable=False)
     modified_at: Mapped[DateTime] = mapped_column("modified_at", DateTime, server_default=func.now(), onupdate=func.now())
     modified_by: Mapped[str] = mapped_column("modified_by", String, nullable=False)
+
+
+
+CREATE TABLE prompts (
+    id UUID PRIMARY KEY,
+    version INTEGER NOT NULL,
+    name VARCHAR NOT NULL,
+    system_prompt VARCHAR NOT NULL,
+    prompt VARCHAR NOT NULL,
+    metadata_info JSONB NOT NULL,
+    tags JSONB NOT NULL,
+    creator_tenant_id VARCHAR NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    created_by VARCHAR NOT NULL,
+    modified_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    modified_by VARCHAR NOT NULL
+);
