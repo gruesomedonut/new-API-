@@ -42,3 +42,44 @@ def delete_prompt_by_category(category: str, session: Session = Depends(acquire_
 @prompt_router.get("/", response_model=List[PromptResponse])
 def get_all_prompts(session: Session = Depends(acquire_db_session)) -> List[Prompts]:
     return PromptApi.get_all_prompts(session)
+
+
+
+from typing import List
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
+
+from app.api.api_v1.prompts.controllers import PromptApi
+from app.db.session import acquire_db_session
+from app.models.prompts import Prompts
+from app.schemas.prompts import (
+    PromptCreate,
+    PromptCreateResponse,
+    PromptResponse,
+    PromptUpdate
+)
+
+prompt_router = APIRouter(prefix="/prompt", tags=["Prompt"])
+
+@prompt_router.post("/", response_model=PromptCreateResponse)
+def create_prompt(prompt_in: PromptCreate, session: Session = Depends(acquire_db_session)) -> Prompts:
+    return PromptApi.create_prompt(session, prompt_in=prompt_in)
+
+@prompt_router.get("/{id}", response_model=PromptResponse)
+def get_prompt_by_id(id: UUID, session: Session = Depends(acquire_db_session)) -> Prompts:
+    return PromptApi.get_prompt_by_id(session, id=id)
+
+@prompt_router.put("/{id}", response_model=PromptResponse)
+def update_prompt(id: UUID, prompt_in: PromptUpdate, session: Session = Depends(acquire_db_session)) -> Prompts:
+    return PromptApi.update_prompt(session, id=id, prompt_in=prompt_in)
+
+@prompt_router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_prompt_by_id(id: UUID, session: Session = Depends(acquire_db_session)) -> None:
+    PromptApi.delete_prompt_by_id(session, id=id)
+
+@prompt_router.get("/", response_model=List[PromptResponse])
+def get_all_prompts(session: Session = Depends(acquire_db_session)) -> List[Prompts]:
+    return PromptApi.get_all_prompts(session)
+
