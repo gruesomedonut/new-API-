@@ -1,0 +1,16 @@
+from sqlalchemy import Column, DateTime, String, Text, func
+from sqlalchemy.orm import Mapped, mapped_column
+
+from app.db.base_class import Base
+
+
+class Prompts(Base):
+    id: Mapped[int] = mapped_column("promptid", primary_key=True)
+    category = Column(String, nullable=False)
+    brand_name = Column(String, nullable=False)
+    customer_persona = Column(String, nullable=False)
+    rationale = Column(Text, nullable=False)
+    generated_prompt = Column(Text, nullable=False)
+    smaller_prompt = Column(Text, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
