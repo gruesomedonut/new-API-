@@ -113,3 +113,179 @@ form button {
 form button:hover {
   background-color: #21a1f1;
 }
+
+
+
+
+.sidebar {
+  width: 250px;
+  background-color: #282c34;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 20px;
+}
+
+.sidebar-header {
+  margin-bottom: 20px;
+}
+
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar nav li {
+  margin-bottom: 10px;
+}
+
+.sidebar nav a {
+  color: white;
+  text-decoration: none;
+}
+
+.sidebar nav a.active {
+  font-weight: bold;
+}
+
+
+
+.home-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  margin-top: 10px;
+  padding: 10px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.cards-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-decoration: none;
+  color: inherit;
+}
+
+.card:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.card h3 {
+  margin: 0 0 10px 0;
+}
+
+
+
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import './HomePage.css';
+
+function HomePage() {
+  return (
+    <div className="home-page">
+      <header className="home-header">
+        <h1>Welcome to Content Supply Chain</h1>
+        <input type="text" placeholder="Search your document" className="search-input" />
+      </header>
+      <div className="cards-container">
+        <Link to="/create" className="card">
+          <h3>Creative Brief Copilot</h3>
+          <p>Auto-generate brief based on analytical outputs...</p>
+        </Link>
+        <div className="card">
+          <h3>Content Generation Copilot</h3>
+          <p>Leverage AI assistant to identify MLR-approved components...</p>
+        </div>
+        <div className="card">
+          <h3>Content Assembly Copilot</h3>
+          <p>Automate assembly of various creative and copy elements...</p>
+        </div>
+        <div className="card">
+          <h3>Content Localization Copilot</h3>
+          <p>Optimize content deliverables for local markets...</p>
+        </div>
+        <div className="card">
+          <h3>MLR Workflow Assistant</h3>
+          <p>Leverage GenAI-enhanced MLR workflows to ensure compliance...</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default HomePage;
+
+
+
+
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import './Sidebar.css';
+
+function Sidebar() {
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-header">
+        <h2>Content Supply Chain</h2>
+      </div>
+      <nav>
+        <ul>
+          <li><NavLink exact to="/" activeClassName="active">Home</NavLink></li>
+          <li><NavLink to="/create" activeClassName="active">Create Prompt</NavLink></li>
+          <li><NavLink to="/prompts" activeClassName="active">All Prompts</NavLink></li>
+        </ul>
+      </nav>
+    </aside>
+  );
+}
+
+export default Sidebar;
+
+
+
+
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import CreatePromptPage from './pages/CreatePromptPage';
+import PromptDetailPage from './pages/PromptDetailPage';
+import PromptListPage from './pages/PromptListPage';
+import Sidebar from './components/Sidebar';
+import './App.css';
+
+function App() {
+  return (
+    <Router>
+      <div className="App">
+        <Sidebar />
+        <main className="main-content">
+          <Switch>
+            <Route exact path="/" component={HomePage} />
+            <Route path="/create" component={CreatePromptPage} />
+            <Route path="/prompts/:id" component={PromptDetailPage} />
+            <Route path="/prompts" component={PromptListPage} />
+          </Switch>
+        </main>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
