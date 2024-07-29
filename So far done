@@ -1,208 +1,322 @@
-from typing import List, Optional
-from uuid import UUID
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import CreatePromptPage from './pages/CreatePromptPage';
+import PromptDetailPage from './pages/PromptDetailPage';
+import PromptListPage from './pages/PromptListPage';
+import './App.css';
 
-from sqlalchemy.orm import Session
+function App() {
+  return (
+    <Router>
+      <div className="App">
+        <Switch>
+          <Route exact path="/" component={HomePage} />
+          <Route path="/create" component={CreatePromptPage} />
+          <Route path="/prompts/:id" component={PromptDetailPage} />
+          <Route path="/prompts" component={PromptListPage} />
+        </Switch>
+      </div>
+    </Router>
+  );
+}
 
-from app.crud.base import CRUDBase
-from app.models.prompts import Prompts
-from app.schemas.prompts import PromptCreate, PromptUpdate
-
-
-class CRUDPrompt(CRUDBase[Prompts, PromptCreate, PromptUpdate]):
-    def get_by_id(self, session: Session, *, id: UUID) -> Optional[Prompts]:
-        return session.query(Prompts).filter(Prompts.id == id).first()
-
-    def remove_by_id(self, session: Session, *, id: UUID) -> None:
-        obj = self.get_by_id(session, id=id)
-        if obj:
-            session.delete(obj)
-            session.commit()
-
-    def get_multi(self, session: Session, *, skip: int = 0, limit: int = 100) -> List[Prompts]:
-        return session.query(Prompts).offset(skip).limit(limit).all()
-
-prompts = CRUDPrompt(Prompts)
-
-
-from sqlalchemy import Column, DateTime, String, Text, JSON, Boolean, Integer, func
-from sqlalchemy.orm import Mapped, mapped_column
-from  uuid import UUID 
-from app.db.base_class import Base
+export default App;
 
 
-class Prompts(Base):
-    id: Mapped[UUID] = mapped_column("id", primary_key=True)
-    version: Mapped[int] = mapped_column("version", nullable=False)
-    name: Mapped[str] = mapped_column("name", String, nullable=False)
-    system_prompt: Mapped[str] = mapped_column("system_prompt", String, nullable=False)
-    prompt: Mapped[str] = mapped_column("prompt", String, nullable=False)
-    metadata_info: Mapped[dict] = mapped_column("metadata_info", JSON, nullable=False)
-    tags: Mapped[list] = mapped_column("tags", JSON, nullable=False)
-    creator_tenant_id: Mapped[str] = mapped_column("creator_tenant_id", String, nullable=False)
-    created_at: Mapped[DateTime] = mapped_column("created_at", DateTime, server_default=func.now())
-    created_by: Mapped[str] = mapped_column("created_by", String, nullable=False)
-    modified_at: Mapped[DateTime] = mapped_column("modified_at", DateTime, server_default=func.now(), onupdate=func.now())
-    modified_by: Mapped[str] = mapped_column("modified_by", String, nullable=False)
+import React from 'react';
+import { Link } from 'react-router-dom';
+
+function HomePage() {
+  return (
+    <div>
+      <h1>Welcome to the Prompt Library</h1>
+      <nav>
+        <ul>
+          <li><Link to="/create">Create a Prompt</Link></li>
+          <li><Link to="/prompts">View All Prompts</Link></li>
+        </ul>
+      </nav>
+    </div>
+  );
+}
+
+export default HomePage;
+
+import React, { useState } from 'react';
+import axios from 'axios';
+
+function CreatePromptPage() {
+  const [promptData, setPromptData] = useState({
+    name: '',
+    system_prompt: '',
+    prompt: '',
+    metadata_info: '',
+    tags: '',
+    creator_tenant_id: '',
+    created_by: '',
+    modified_by: ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setPromptData({ ...promptData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('/api/prompt', {
+        ...promptData,
+        metadata_info: JSON.parse(promptData.metadata_info),
+        tags: promptData.tags.split(',').map(tag => tag.trim())
+      });
+      alert('Prompt created successfully!');
+    } catch (error) {
+      console.error('There was an error creating the prompt!', error);
+    }
+  };
+
+  return (
+    <div className="App-header">
+      <h1>Create a New Prompt</h1>
+      <form onSubmit={handleSubmit}>
+        <label>
+          Name:
+          <input type="text" name="name" value={promptData.name} onChange={handleChange} required />
+        </label>
+        <label>
+          System Prompt:
+          <input type="text" name="system_prompt" value={promptData.system_prompt} onChange={handleChange} required />
+        </label>
+        <label>
+          Prompt:
+          <input type="text" name="prompt" value={promptData.prompt} onChange={handleChange} required />
+        </label>
+        <label>
+          Metadata Info (JSON):
+          <input type="text" name="metadata_info" value={promptData.metadata_info} onChange={handleChange} required />
+        </label>
+        <label>
+          Tags (comma separated):
+          <input type="text" name="tags" value={promptData.tags} onChange={handleChange} required />
+        </label>
+        <label>
+          Creator Tenant ID:
+          <input type="text" name="creator_tenant_id" value={promptData.creator_tenant_id} onChange={handleChange} required />
+        </label>
+        <label>
+          Created By:
+          <input type="text" name="created_by" value={promptData.created_by} onChange={handleChange} required />
+        </label>
+        <label>
+          Modified By:
+          <input type="text" name="modified_by" value={promptData.modified_by} onChange={handleChange} required />
+        </label>
+        <button type="submit">Create Prompt</button>
+      </form>
+    </div>
+  );
+}
+
+export default CreatePromptPage;
+
+
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+
+function PromptDetailPage() {
+  const { id } = useParams();
+  const [prompt, setPrompt] = useState(null);
+
+  useEffect(() => {
+    const fetchPrompt = async () => {
+      try {
+        const response = await axios.get(`/api/prompt/${id}`);
+        setPrompt(response.data);
+      } catch (error) {
+        console.error('Error fetching the prompt:', error);
+      }
+    };
+
+    fetchPrompt();
+  }, [id]);
+
+  if (!prompt) return <div className="App-header">Loading...</div>;
+
+  return (
+    <div className="prompt-details">
+      <h1>Prompt Details</h1>
+      <p><strong>Name:</strong> {prompt.name}</p>
+      <p><strong>System Prompt:</strong> {prompt.system_prompt}</p>
+      <p><strong>Prompt:</strong> {prompt.prompt}</p>
+      <p><strong>Metadata Info:</strong> {JSON.stringify(prompt.metadata_info)}</p>
+      <p><strong>Tags:</strong> {prompt.tags.join(', ')}</p>
+      <p><strong>Creator Tenant ID:</strong> {prompt.creator_tenant_id}</p>
+      <p><strong>Created By:</strong> {prompt.created_by}</p>
+      <p><strong>Modified By:</strong> {prompt.modified_by}</p>
+      <p><strong>Created At:</strong> {prompt.created_at}</p>
+      <p><strong>Modified At:</strong> {prompt.modified_at}</p>
+    </div>
+  );
+}
+
+export default PromptDetailPage;
 
 
 
-from datetime import datetime
-from uuid import UUID
-from typing import List, Optional
-from pydantic import BaseModel
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+
+function PromptListPage() {
+  const [prompts, setPrompts] = useState([]);
+
+  useEffect(() => {
+    const fetchPrompts = async () => {
+      try {
+        const response = await axios.get('/api/prompt');
+        setPrompts(response.data);
+      } catch (error) {
+        console.error('Error fetching the prompts:', error);
+      }
+    };
+
+    fetchPrompts();
+  }, []);
+
+  return (
+    <div className="App-header">
+      <h1>All Prompts</h1>
+      <ul>
+        {prompts.map((prompt) => (
+          <li key={prompt.id}>
+            <Link to={`/prompts/${prompt.id}`}>{prompt.name}</Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default PromptListPage;
 
 
-class PromptBase(BaseModel):
-    id:UUID
-    name: str
-    system_prompt: str
-    prompt: str
-    metadata_info: dict
-    tags: List[str]
-    creator_tenant_id: str
-    created_by: str
-    modified_by: str
 
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
-class PromptCreate(PromptBase):
-    version: int
-    id:UUID
-    name: str
-    system_prompt: str
-    prompt: str
-    metadata_info: dict
-    tags: List[str]
-    creator_tenant_id: str
-    created_by: str
-    modified_by: str
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: #f0f2f5;
+  color: #333;
+}
 
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
 
-class PromptUpdate(BaseModel):
-    name: Optional[str] = None
-    system_prompt: Optional[str] = None
-    prompt: Optional[str] = None
-    metadata_info: Optional[dict] = None
-    tags: Optional[List[str]] = None
-    modified_by: str
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 20px;
+}
 
+nav ul {
+  display: flex;
+  gap: 20px;
+}
 
-class PromptResponse(PromptBase):
-    id: UUID
-    version: int
-    created_at: datetime
-    modified_at: datetime
+nav a {
+  color: #61dafb;
+  text-decoration: none;
+  font-size: 1.2rem;
+}
 
-    class Config:
-        orm_mode = True
+nav a:hover {
+  color: #21a1f1;
+}
 
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  margin: 20px auto;
+}
 
-class PromptCreateResponse(BaseModel):
-    id: UUID
+form label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
 
+form input,
+form select,
+form textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
 
-from sqlalchemy import Column, DateTime, String, Text, JSON, Boolean, Integer, func
-from sqlalchemy.orm import Mapped, mapped_column
-from  uuid import UUID 
-from app.db.base_class import Base
+form button {
+  width: 100%;
+  padding: 10px;
+  background-color: #61dafb;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
 
+form button:hover {
+  background-color: #21a1f1;
+}
 
-class Prompts(Base):
-    id: Mapped[UUID] = mapped_column("id", primary_key=True)
-    version: Mapped[int] = mapped_column("version", nullable=False)
-    name: Mapped[str] = mapped_column("name", String, nullable=False)
-    system_prompt: Mapped[str] = mapped_column("system_prompt", String, nullable=False)
-    prompt: Mapped[str] = mapped_column("prompt", String, nullable=False)
-    metadata_info: Mapped[dict] = mapped_column("metadata_info", JSON, nullable=False)
-    tags: Mapped[list] = mapped_column("tags", JSON, nullable=False)
-    creator_tenant_id: Mapped[str] = mapped_column("creator_tenant_id", String, nullable=False)
-    created_at: Mapped[DateTime] = mapped_column("created_at", DateTime, server_default=func.now())
-    created_by: Mapped[str] = mapped_column("created_by", String, nullable=False)
-    modified_at: Mapped[DateTime] = mapped_column("modified_at", DateTime, server_default=func.now(), onupdate=func.now())
-    modified_by: Mapped[str] = mapped_column("modified_by", String, nullable=False)
+ul {
+  list-style: none;
+  padding: 0;
+}
 
+li {
+  background: white;
+  margin-bottom: 10px;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
 
-from typing import List
-from uuid import UUID
+a {
+  color: #61dafb;
+  text-decoration: none;
+}
 
-from fastapi import HTTPException
-from sqlalchemy.orm import Session
+a:hover {
+  text-decoration: underline;
+}
 
-from app.crud.prompts import prompts
-from app.models.prompts import Prompts
-from app.schemas.prompts import PromptCreate, PromptUpdate
+.prompt-details {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 20px auto;
+}
 
+.prompt-details p {
+  margin: 10px 0;
+  line-height: 1.6;
+}
 
-class PromptApi:
-    """API interface for managing prompts."""
-    @staticmethod
-    def create_prompt(session: Session, *, prompt_in: PromptCreate) -> Prompts:
-        """Create a new prompt."""
-        return prompts.create(session, obj_in=prompt_in)
-
-    @staticmethod
-    def get_prompt_by_id(session: Session, *, id: UUID) -> Prompts:
-        """Retrieve a prompt by its ID."""
-        prompt = prompts.get_by_id(session, id=id)
-        if not prompt:
-            raise HTTPException(status_code=404, detail="Prompt not found")
-        return prompt
-
-    @staticmethod
-    def update_prompt(session: Session, *, id: UUID, prompt_in: PromptUpdate) -> Prompts:
-        """Update an existing prompt."""
-        db_obj = prompts.get_by_id(session, id=id)
-        if not db_obj:
-            raise HTTPException(status_code=404, detail="Prompt not found")
-        return prompts.update(session, db_obj=db_obj, obj_in=prompt_in)
-
-    @staticmethod
-    def delete_prompt_by_id(session: Session, *, id: UUID) -> None:
-        """Delete a prompt by its ID."""
-        prompt = prompts.get_by_id(session, id=id)
-        if not prompt:
-            raise HTTPException(status_code=404, detail="Prompt not found")
-        prompts.remove_by_id(session, id=id)
-
-    @staticmethod
-    def get_all_prompts(session: Session) -> List[Prompts]:
-        """Retrieve all prompts."""
-        return prompts.get_multi(session)
-
-
-from typing import List
-from uuid import UUID
-
-from fastapi import APIRouter, Depends, status
-from sqlalchemy.orm import Session
-
-from app.api.api_v1.prompts.controllers import PromptApi
-from app.db.session import acquire_db_session
-from app.models.prompts import Prompts
-from app.schemas.prompts import (
-    PromptCreate,
-    PromptCreateResponse,
-    PromptResponse,
-    PromptUpdate
-)
-
-prompt_router = APIRouter(prefix="/prompt", tags=["Prompt"])
-
-@prompt_router.post("/", response_model=PromptCreateResponse)
-def create_prompt(prompt_in: PromptCreate, session: Session = Depends(acquire_db_session)) -> Prompts:
-    return PromptApi.create_prompt(session, prompt_in=prompt_in)
-
-@prompt_router.get("/{id}", response_model=PromptResponse)
-def get_prompt_by_id(id: UUID, session: Session = Depends(acquire_db_session)) -> Prompts:
-    return PromptApi.get_prompt_by_id(session, id=id)
-
-@prompt_router.put("/{id}", response_model=PromptResponse)
-def update_prompt(id: UUID, prompt_in: PromptUpdate, session: Session = Depends(acquire_db_session)) -> Prompts:
-    return PromptApi.update_prompt(session, id=id, prompt_in=prompt_in)
-
-@prompt_router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_prompt_by_id(id: UUID, session: Session = Depends(acquire_db_session)) -> None:
-    PromptApi.delete_prompt_by_id(session, id=id)
-
-@prompt_router.get("/", response_model=List[PromptResponse])
-def get_all_prompts(session: Session = Depends(acquire_db_session)) -> List[Prompts]:
-    return PromptApi.get_all_prompts(session)
