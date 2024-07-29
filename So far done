@@ -1,0 +1,208 @@
+from typing import List, Optional
+from uuid import UUID
+
+from sqlalchemy.orm import Session
+
+from app.crud.base import CRUDBase
+from app.models.prompts import Prompts
+from app.schemas.prompts import PromptCreate, PromptUpdate
+
+
+class CRUDPrompt(CRUDBase[Prompts, PromptCreate, PromptUpdate]):
+    def get_by_id(self, session: Session, *, id: UUID) -> Optional[Prompts]:
+        return session.query(Prompts).filter(Prompts.id == id).first()
+
+    def remove_by_id(self, session: Session, *, id: UUID) -> None:
+        obj = self.get_by_id(session, id=id)
+        if obj:
+            session.delete(obj)
+            session.commit()
+
+    def get_multi(self, session: Session, *, skip: int = 0, limit: int = 100) -> List[Prompts]:
+        return session.query(Prompts).offset(skip).limit(limit).all()
+
+prompts = CRUDPrompt(Prompts)
+
+
+from sqlalchemy import Column, DateTime, String, Text, JSON, Boolean, Integer, func
+from sqlalchemy.orm import Mapped, mapped_column
+from  uuid import UUID 
+from app.db.base_class import Base
+
+
+class Prompts(Base):
+    id: Mapped[UUID] = mapped_column("id", primary_key=True)
+    version: Mapped[int] = mapped_column("version", nullable=False)
+    name: Mapped[str] = mapped_column("name", String, nullable=False)
+    system_prompt: Mapped[str] = mapped_column("system_prompt", String, nullable=False)
+    prompt: Mapped[str] = mapped_column("prompt", String, nullable=False)
+    metadata_info: Mapped[dict] = mapped_column("metadata_info", JSON, nullable=False)
+    tags: Mapped[list] = mapped_column("tags", JSON, nullable=False)
+    creator_tenant_id: Mapped[str] = mapped_column("creator_tenant_id", String, nullable=False)
+    created_at: Mapped[DateTime] = mapped_column("created_at", DateTime, server_default=func.now())
+    created_by: Mapped[str] = mapped_column("created_by", String, nullable=False)
+    modified_at: Mapped[DateTime] = mapped_column("modified_at", DateTime, server_default=func.now(), onupdate=func.now())
+    modified_by: Mapped[str] = mapped_column("modified_by", String, nullable=False)
+
+
+
+from datetime import datetime
+from uuid import UUID
+from typing import List, Optional
+from pydantic import BaseModel
+
+
+class PromptBase(BaseModel):
+    id:UUID
+    name: str
+    system_prompt: str
+    prompt: str
+    metadata_info: dict
+    tags: List[str]
+    creator_tenant_id: str
+    created_by: str
+    modified_by: str
+
+
+class PromptCreate(PromptBase):
+    version: int
+    id:UUID
+    name: str
+    system_prompt: str
+    prompt: str
+    metadata_info: dict
+    tags: List[str]
+    creator_tenant_id: str
+    created_by: str
+    modified_by: str
+
+
+class PromptUpdate(BaseModel):
+    name: Optional[str] = None
+    system_prompt: Optional[str] = None
+    prompt: Optional[str] = None
+    metadata_info: Optional[dict] = None
+    tags: Optional[List[str]] = None
+    modified_by: str
+
+
+class PromptResponse(PromptBase):
+    id: UUID
+    version: int
+    created_at: datetime
+    modified_at: datetime
+
+    class Config:
+        orm_mode = True
+
+
+class PromptCreateResponse(BaseModel):
+    id: UUID
+
+
+from sqlalchemy import Column, DateTime, String, Text, JSON, Boolean, Integer, func
+from sqlalchemy.orm import Mapped, mapped_column
+from  uuid import UUID 
+from app.db.base_class import Base
+
+
+class Prompts(Base):
+    id: Mapped[UUID] = mapped_column("id", primary_key=True)
+    version: Mapped[int] = mapped_column("version", nullable=False)
+    name: Mapped[str] = mapped_column("name", String, nullable=False)
+    system_prompt: Mapped[str] = mapped_column("system_prompt", String, nullable=False)
+    prompt: Mapped[str] = mapped_column("prompt", String, nullable=False)
+    metadata_info: Mapped[dict] = mapped_column("metadata_info", JSON, nullable=False)
+    tags: Mapped[list] = mapped_column("tags", JSON, nullable=False)
+    creator_tenant_id: Mapped[str] = mapped_column("creator_tenant_id", String, nullable=False)
+    created_at: Mapped[DateTime] = mapped_column("created_at", DateTime, server_default=func.now())
+    created_by: Mapped[str] = mapped_column("created_by", String, nullable=False)
+    modified_at: Mapped[DateTime] = mapped_column("modified_at", DateTime, server_default=func.now(), onupdate=func.now())
+    modified_by: Mapped[str] = mapped_column("modified_by", String, nullable=False)
+
+
+from typing import List
+from uuid import UUID
+
+from fastapi import HTTPException
+from sqlalchemy.orm import Session
+
+from app.crud.prompts import prompts
+from app.models.prompts import Prompts
+from app.schemas.prompts import PromptCreate, PromptUpdate
+
+
+class PromptApi:
+    """API interface for managing prompts."""
+    @staticmethod
+    def create_prompt(session: Session, *, prompt_in: PromptCreate) -> Prompts:
+        """Create a new prompt."""
+        return prompts.create(session, obj_in=prompt_in)
+
+    @staticmethod
+    def get_prompt_by_id(session: Session, *, id: UUID) -> Prompts:
+        """Retrieve a prompt by its ID."""
+        prompt = prompts.get_by_id(session, id=id)
+        if not prompt:
+            raise HTTPException(status_code=404, detail="Prompt not found")
+        return prompt
+
+    @staticmethod
+    def update_prompt(session: Session, *, id: UUID, prompt_in: PromptUpdate) -> Prompts:
+        """Update an existing prompt."""
+        db_obj = prompts.get_by_id(session, id=id)
+        if not db_obj:
+            raise HTTPException(status_code=404, detail="Prompt not found")
+        return prompts.update(session, db_obj=db_obj, obj_in=prompt_in)
+
+    @staticmethod
+    def delete_prompt_by_id(session: Session, *, id: UUID) -> None:
+        """Delete a prompt by its ID."""
+        prompt = prompts.get_by_id(session, id=id)
+        if not prompt:
+            raise HTTPException(status_code=404, detail="Prompt not found")
+        prompts.remove_by_id(session, id=id)
+
+    @staticmethod
+    def get_all_prompts(session: Session) -> List[Prompts]:
+        """Retrieve all prompts."""
+        return prompts.get_multi(session)
+
+
+from typing import List
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, status
+from sqlalchemy.orm import Session
+
+from app.api.api_v1.prompts.controllers import PromptApi
+from app.db.session import acquire_db_session
+from app.models.prompts import Prompts
+from app.schemas.prompts import (
+    PromptCreate,
+    PromptCreateResponse,
+    PromptResponse,
+    PromptUpdate
+)
+
+prompt_router = APIRouter(prefix="/prompt", tags=["Prompt"])
+
+@prompt_router.post("/", response_model=PromptCreateResponse)
+def create_prompt(prompt_in: PromptCreate, session: Session = Depends(acquire_db_session)) -> Prompts:
+    return PromptApi.create_prompt(session, prompt_in=prompt_in)
+
+@prompt_router.get("/{id}", response_model=PromptResponse)
+def get_prompt_by_id(id: UUID, session: Session = Depends(acquire_db_session)) -> Prompts:
+    return PromptApi.get_prompt_by_id(session, id=id)
+
+@prompt_router.put("/{id}", response_model=PromptResponse)
+def update_prompt(id: UUID, prompt_in: PromptUpdate, session: Session = Depends(acquire_db_session)) -> Prompts:
+    return PromptApi.update_prompt(session, id=id, prompt_in=prompt_in)
+
+@prompt_router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_prompt_by_id(id: UUID, session: Session = Depends(acquire_db_session)) -> None:
+    PromptApi.delete_prompt_by_id(session, id=id)
+
+@prompt_router.get("/", response_model=List[PromptResponse])
+def get_all_prompts(session: Session = Depends(acquire_db_session)) -> List[Prompts]:
+    return PromptApi.get_all_prompts(session)
