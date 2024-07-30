@@ -1,4 +1,639 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+import React from 'react';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import CreatePromptPage from './pages/CreatePromptPage';
+import PromptDetailPage from './pages/PromptDetailPage';
+import PromptListPage from './pages/PromptListPage';
+import CategoryPage from './pages/CategoryPage';
+import ProfilePage from './pages/ProfilePage';
+import SettingsPage from './pages/SettingsPage';
+import MarketingInsightsPage from './pages/MarketingInsightsPage';
+import UploadFilesPage from './pages/UploadFilesPage';
+import Sidebar from './components/Sidebar';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import './App.css';
+
+function App() {
+  return (
+    <Router>
+      <div className="App">
+        <Sidebar />
+        <div className="content">
+          <Header />
+          <main className="main-content">
+            <Switch>
+              <Route exact path="/" component={HomePage} />
+              <Route path="/create" component={CreatePromptPage} />
+              <Route path="/prompts/:id" component={PromptDetailPage} />
+              <Route path="/prompts" component={PromptListPage} />
+              <Route path="/categories" component={CategoryPage} />
+              <Route path="/profile" component={ProfilePage} />
+              <Route path="/settings" component={SettingsPage} />
+              <Route path="/marketing-insights" component={MarketingInsightsPage} />
+              <Route path="/upload-files" component={UploadFilesPage} />
+            </Switch>
+          </main>
+          <Footer />
+        </div>
+      </div>
+    </Router>
+  );
+}
+
+export default App;
+
+
+import React from 'react';
+import { NavLink } from 'react-router-dom';
+import './Sidebar.css';
+
+function Sidebar() {
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-header">
+        <h2>Prompt Library</h2>
+      </div>
+      <nav>
+        <ul>
+          <li><NavLink exact to="/" activeClassName="active">Home</NavLink></li>
+          <li><NavLink to="/create" activeClassName="active">Create Prompt</NavLink></li>
+          <li><NavLink to="/prompts" activeClassName="active">All Prompts</NavLink></li>
+          <li><NavLink to="/categories" activeClassName="active">Categories</NavLink></li>
+          <li><NavLink to="/profile" activeClassName="active">Profile</NavLink></li>
+          <li><NavLink to="/settings" activeClassName="active">Settings</NavLink></li>
+          <li><NavLink to="/marketing-insights" activeClassName="active">Marketing Insights</NavLink></li>
+          <li><NavLink to="/upload-files" activeClassName="active">Upload Files</NavLink></li>
+        </ul>
+      </nav>
+    </aside>
+  );
+}
+
+export default Sidebar;
+
+
+
+import React from 'react';
+import './Header.css';
+
+function Header() {
+  return (
+    <header className="header">
+      <h1>Welcome to Prompt Library</h1>
+      <input type="text" placeholder="Search your document" className="search-input" />
+    </header>
+  );
+}
+
+export default Header;
+
+
+import React from 'react';
+import './Footer.css';
+
+function Footer() {
+  return (
+    <footer className="footer">
+      <p>&copy; 2024 Prompt Library. All rights reserved.</p>
+    </footer>
+  );
+}
+
+export default Footer;
+
+
+import React from 'react';
+import { Link } from 'react-router-dom';
+import './HomePage.css';
+
+function HomePage() {
+  return (
+    <div className="home-page">
+      <h2>Dashboard</h2>
+      <div className="cards-container">
+        <Link to="/create" className="card">
+          <h3>Creative Brief Copilot</h3>
+          <p>Auto-generate brief based on analytical outputs...</p>
+        </Link>
+        <Link to="/prompts" className="card">
+          <h3>Content Generation Copilot</h3>
+          <p>Leverage AI assistant to identify MLR-approved components...</p>
+        </Link>
+        <Link to="/categories" className="card">
+          <h3>Manage Categories</h3>
+          <p>Organize and manage your prompt categories...</p>
+        </Link>
+        <Link to="/profile" className="card">
+          <h3>User Profiles</h3>
+          <p>View and edit user profiles...</p>
+        </Link>
+        <Link to="/settings" className="card">
+          <h3>Settings</h3>
+          <p>Adjust your application settings...</p>
+        </Link>
+        <Link to="/marketing-insights" className="card">
+          <h3>Marketing Insights</h3>
+          <p>Upload PDFs and images for marketing insights...</p>
+        </Link>
+        <Link to="/upload-files" className="card">
+          <h3>Upload Files</h3>
+          <p>Upload PDFs and social media analysis...</p>
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+export default HomePage;
+
+
+
+import React, { useState } from 'react';
+import axios from 'axios';
+import './CreatePromptPage.css';
+
+function CreatePromptPage() {
+  const [promptData, setPromptData] = useState({
+    name: '',
+    system_prompt: '',
+    prompt: '',
+    metadata_info: '',
+    tags: '',
+    creator_tenant_id: '',
+    created_by: '',
+    modified_by: ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setPromptData({ ...promptData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('/api/prompt', {
+        ...promptData,
+        metadata_info: JSON.parse(promptData.metadata_info),
+        tags: promptData.tags.split(',').map(tag => tag.trim())
+      });
+      alert('Prompt created successfully!');
+    } catch (error) {
+      console.error('There was an error creating the prompt!', error);
+    }
+  };
+
+  return (
+    <div className="create-prompt-page">
+      <h1>Create a New Prompt</h1>
+      <form onSubmit={handleSubmit}>
+        <label>Name:</label>
+        <input type="text" name="name" value={promptData.name} onChange={handleChange} required />
+
+        <label>System Prompt:</label>
+        <input type="text" name="system_prompt" value={promptData.system_prompt} onChange={handleChange} required />
+
+        <label>Prompt:</label>
+        <input type="text" name="prompt" value={promptData.prompt} onChange={handleChange} required />
+
+        <label>Metadata Info (JSON):</label>
+        <input type="text" name="metadata_info" value={promptData.metadata_info} onChange={handleChange} required />
+
+        <label>Tags (comma separated):</label>
+        <input type="text" name="tags" value={promptData.tags} onChange={handleChange} required />
+
+        <label>Creator Tenant ID:</label>
+        <input type="text" name="creator_tenant_id" value={promptData.creator_tenant_id} onChange={handleChange} required />
+
+        <label>Created By:</label>
+        <input type="text" name="created_by" value={promptData.created_by} onChange={handleChange} required />
+
+        <label>Modified By:</label>
+        <input type="text" name="modified_by" value={promptData.modified_by} onChange={handleChange
+
+import React, { useState } from 'react';
+import axios from 'axios';
+import './CreatePromptPage.css';
+
+function CreatePromptPage() {
+  const [promptData, setPromptData] = useState({
+    name: '',
+    system_prompt: '',
+    prompt: '',
+    metadata_info: '',
+    tags: '',
+    creator_tenant_id: '',
+    created_by: '',
+    modified_by: ''
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setPromptData({ ...promptData, [name]: value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      await axios.post('/api/prompt', {
+        ...promptData,
+        metadata_info: JSON.parse(promptData.metadata_info),
+        tags: promptData.tags.split(',').map(tag => tag.trim())
+      });
+      alert('Prompt created successfully!');
+    } catch (error) {
+      console.error('There was an error creating the prompt!', error);
+    }
+  };
+
+  return (
+    <div className="create-prompt-page">
+      <h1>Create a New Prompt</h1>
+      <form onSubmit={handleSubmit}>
+        <label>Name:</label>
+        <input type="text" name="name" value={promptData.name} onChange={handleChange} required />
+
+        <label>System Prompt:</label>
+        <input type="text" name="system_prompt" value={promptData.system_prompt} onChange={handleChange} required />
+
+        <label>Prompt:</label>
+        <input type="text" name="prompt" value={promptData.prompt} onChange={handleChange} required />
+
+        <label>Metadata Info (JSON):</label>
+        <input type="text" name="metadata_info" value={promptData.metadata_info} onChange={handleChange} required />
+
+        <label>Tags (comma separated):</label>
+        <input type="text" name="tags" value={promptData.tags} onChange={handleChange} required />
+
+        <label>Creator Tenant ID:</label>
+        <input type="text" name="creator_tenant_id" value={promptData.creator_tenant_id} onChange={handleChange} required />
+
+        <label>Created By:</label>
+        <input type="text" name="created_by" value={promptData.created_by} onChange={handleChange} required />
+
+        <label>Modified By:</label>
+        <input type="text" name="modified_by" value={promptData.modified_by} onChange={handleChange}required />
+    <button type="submit">Create Prompt</button>
+  </form>
+</div>
+);
+}
+
+
+### 7. `src/pages/PromptDetailPage.js`
+```jsx
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import axios from 'axios';
+import './PromptDetailPage.css';
+
+function PromptDetailPage() {
+  const { id } = useParams();
+  const [prompt, setPrompt] = useState(null);
+
+  useEffect(() => {
+    const fetchPrompt = async () => {
+      try {
+        const response = await axios.get(`/api/prompt/${id}`);
+        setPrompt(response.data);
+      } catch (error) {
+        console.error('Error fetching the prompt:', error);
+      }
+    };
+
+    fetchPrompt();
+  }, [id]);
+
+  if (!prompt) return <div className="loading">Loading...</div>;
+
+  return (
+    <div className="prompt-detail-page">
+      <h1>Prompt Details</h1>
+      <div className="prompt-details">
+        <p><strong>Name:</strong> {prompt.name}</p>
+        <p><strong>System Prompt:</strong> {prompt.system_prompt}</p>
+        <p><strong>Prompt:</strong> {prompt.prompt}</p>
+        <p><strong>Metadata Info:</strong> {JSON.stringify(prompt.metadata_info)}</p>
+        <p><strong>Tags:</strong> {prompt.tags.join(', ')}</p>
+        <p><strong>Creator Tenant ID:</strong> {prompt.creator_tenant_id}</p>
+        <p><strong>Created By:</strong> {prompt.created_by}</p>
+        <p><strong>Modified By:</strong> {prompt.modified_by}</p>
+        <p><strong>Created At:</strong> {prompt.created_at}</p>
+        <p><strong>Modified At:</strong> {prompt.modified_at}</p>
+      </div>
+    </div>
+  );
+}
+
+export default PromptDetailPage;
+
+
+
+
+
+import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
+import './PromptListPage.css';
+
+function PromptListPage() {
+  const [prompts, setPrompts] = useState([]);
+
+  useEffect(() => {
+    const fetchPrompts = async () => {
+      try {
+        const response = await axios.get('/api/prompt');
+        setPrompts(response.data);
+      } catch (error) {
+        console.error('Error fetching the prompts:', error);
+      }
+    };
+
+    fetchPrompts();
+  }, []);
+
+  return (
+    <div className="prompt-list-page">
+      <h1>All Prompts</h1>
+      <ul className="prompt-list">
+        {prompts.map(prompt => (
+          <li key={prompt.id} className="prompt-item">
+            <Link to={`/prompts/${prompt.id}`}>
+              <h3>{prompt.name}</h3>
+              <p>{prompt.prompt}</p>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default PromptListPage;
+
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './CategoryPage.css';
+
+function CategoryPage() {
+  const [categories, setCategories] = useState([]);
+  const [newCategory, setNewCategory] = useState('');
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await axios.get('/api/categories');
+        setCategories(response.data);
+      } catch (error) {
+        console.error('Error fetching categories:', error);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleAddCategory = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('/api/categories', { name: newCategory });
+      setCategories([...categories, response.data]);
+      setNewCategory('');
+    } catch (error) {
+      console.error('Error adding category:', error);
+    }
+  };
+
+  return (
+    <div className="category-page">
+      <h1>Manage Categories</h1>
+      <form onSubmit={handleAddCategory}>
+        <label>Add New Category:</label>
+        <input
+          type="text"
+          value={newCategory}
+          onChange={(e) => setNewCategory(e.target.value)}
+          required
+        />
+        <button type="submit">Add</button>
+      </form>
+      <ul className="category-list">
+        {categories.map((category) => (
+          <li key={category.id} className="category-item">
+            {category.name}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default CategoryPage;
+
+
+
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import './ProfilePage.css';
+
+function ProfilePage() {
+  const [profile, setProfile] = useState({});
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await axios.get('/api/profile');
+        setProfile(response.data);
+      } catch (error) {
+        console.error('Error fetching profile:', error);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  return (
+    <div className="profile-page">
+      <h1>User Profile</h1>
+      <div className="profile-details">
+        <p><strong>Name:</strong> {profile.name}</p>
+        <p><strong>Email:</strong> {profile.email}</p>
+        <p><strong>Role:</strong> {profile.role}</p>
+      </div>
+    </div>
+  );
+}
+
+export default ProfilePage;
+
+
+
+
+import React, { useState } from 'react';
+import './SettingsPage.css';
+
+function SettingsPage() {
+  const [settings, setSettings] = useState({
+    theme: 'light',
+    notifications: true,
+  });
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setSettings({
+      ...settings,
+      [name]: type === 'checkbox' ? checked : value,
+    });
+  };
+
+  const handleSave = (e) => {
+    e.preventDefault();
+    // Save settings to the backend
+    console.log('Settings saved:', settings);
+  };
+
+  return (
+    <div className="settings-page">
+      <h1>Settings</h1>
+      <form onSubmit={handleSave}>
+        <label>Theme:</label>
+        <select name="theme" value={settings.theme} onChange={handleChange}>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+
+        <label>
+          <input
+            type="checkbox"
+            name="notifications"
+            checked={settings.notifications}
+            onChange={handleChange}
+          />
+          Enable Notifications
+        </label>
+
+        <button type="submit">Save Settings</button>
+      </form>
+    </div>
+  );
+}
+
+export default SettingsPage;
+
+
+
+import React, { useState } from 'react';
+import { useHistory } from 'react-router-dom';
+import './MarketingInsightsPage.css';
+
+function MarketingInsightsPage() {
+  const [formData, setFormData] = useState({
+    category: '',
+    brand: '',
+    customerPersona: '',
+    market: '',
+  });
+  const history = useHistory();
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+  };
+
+  const handleNext = () => {
+    // Save the formData to the backend or state
+    history.push('/upload-files');
+  };
+
+  return (
+    <div className="marketing-insights-page">
+      <h1>Marketing Insights</h1>
+      <form>
+        <label>Category:</label>
+        <select name="category" value={formData.category} onChange={handleChange}>
+          <option value="">Select an option</option>
+          <option value="Category1">Category1</option>
+          <option value="Category2">Category2</option>
+        </select>
+
+        <label>Brand:</label>
+        <select name="brand" value={formData.brand} onChange={handleChange}>
+          <option value="">Select an option</option>
+          <option value="Brand1">Brand1</option>
+          <option value="Brand2">Brand2</option>
+        </select>
+
+        <label>Customer Persona:</label>
+        <select name="customerPersona" value={formData.customerPersona} onChange={handleChange}>
+          <option value="">Select an option</option>
+          <option value="Persona1">Persona1</option>
+          <option value="Persona2">Persona2</option>
+        </select>
+
+        <label>Market:</label>
+        <select name="market" value={formData.market} onChange={handleChange}>
+          <option value="">Select an option</option>
+          <option value="Market1">Market1</option>
+          <option value="Market2">Market2</option>
+        </select>
+
+        <button type="button" onClick={handleNext}>Next</button>
+      </form>
+);
+}
+
+export default MarketingInsightsPage
+### 13. `src/pages/UploadFilesPage.js`
+```jsx
+import React, { useState } from 'react';
+import './UploadFilesPage.css';
+
+function UploadFilesPage() {
+  const [fileData, setFileData] = useState({
+    pdf: null,
+    images: [],
+  });
+
+  const handleFileChange = (e) => {
+    const { name, files } = e.target;
+    if (name === 'pdf') {
+      setFileData({ ...fileData, pdf: files[0] });
+    } else {
+      setFileData({ ...fileData, images: Array.from(files) });
+    }
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Handle file upload to the backend
+    console.log('Files uploaded:', fileData);
+  };
+
+  return (
+    <div className="upload-files-page">
+      <h1>Upload Files</h1>
+      <form onSubmit={handleSubmit}>
+        <label>Upload PDF:</label>
+        <input type="file" name="pdf" accept=".pdf" onChange={handleFileChange} required />
+
+        <label>Upload Images:</label>
+        <input type="file" name="images" accept="image/*" multiple onChange={handleFileChange} required />
+
+        <button type="submit">Upload</button>
+      </form>
+    </div>
+  );
+}
+
+export default UploadFilesPage;
+
+
+
 
 body {
   margin: 0;
@@ -9,112 +644,20 @@ body {
 
 .App {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  min-height: 100vh;
-  padding: 20px;
 }
 
-.header {
-  width: 100%;
-  background-color: #282c34;
-  color: white;
-  padding: 20px;
-  text-align: center;
-}
-
-nav ul {
-  list-style-type: none;
-  padding: 0;
+.content {
+  flex: 1;
   display: flex;
-  justify-content: center;
-  gap: 20px;
-}
-
-nav a {
-  color: #61dafb;
-  text-decoration: none;
-  font-size: 1.2rem;
-}
-
-nav a:hover {
-  color: #21a1f1;
-}
-
-.container {
-  display: grid;
-  grid-template-columns: 1fr 3fr;
-  gap: 20px;
-  width: 100%;
-  max-width: 1200px;
-}
-
-.sidebar {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  flex-direction: column;
 }
 
 .main-content {
-  background: white;
+  flex: 1;
   padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #ece9e6, #ffffff);
+  min-height: 100vh;
 }
-
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-
-.sidebar li {
-  margin-bottom: 10px;
-}
-
-.sidebar a {
-  color: #333;
-  text-decoration: none;
-}
-
-.sidebar a:hover {
-  text-decoration: underline;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-}
-
-form label {
-  margin-bottom: 10px;
-  font-weight: bold;
-}
-
-form input,
-form textarea {
-  padding: 10px;
-  margin-bottom: 20px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-form button {
-  padding: 10px;
-  background-color: #61dafb;
-  border: none;
-  border-radius: 4px;
-  color: white;
-  font-size: 1rem;
-  cursor: pointer;
-}
-
-form button:hover {
-  background-color: #21a1f1;
-}
-
-
 
 
 .sidebar {
@@ -150,26 +693,42 @@ form button:hover {
 }
 
 
-
-.home-header {
+.header {
+  background-color: #282c34;
+  color: white;
+  padding: 20px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  margin-bottom: 20px;
+  justify-content: space-between;
+}
+
+.header h1 {
+  margin: 0;
 }
 
 .search-input {
-  margin-top: 10px;
   padding: 10px;
-  width: 100%;
-  max-width: 400px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  border-radius: 4px;
+  border: none;
+  width: 200px;
+}
+
+
+.footer {
+  background-color: #282c34;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+
+.home-page {
+  padding: 20px;
 }
 
 .cards-container {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
 }
 
@@ -187,105 +746,299 @@ form button:hover {
 }
 
 .card h3 {
-  margin: 0 0 10px 0;
+  margin-top: 0;
+}
+
+
+.create-prompt-page {
+  padding: 20px;
+}
+
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+input,
+textarea {
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px;
+  background-color: #61dafb;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #21a1f1;
+}
+
+
+.prompt-detail-page {
+  padding: 20px;
+}
+
+.prompt-details {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.prompt-details p {
+  margin: 10px 0;
+}
+
+
+
+.prompt-list-page {
+  padding: 20px;
+}
+
+.prompt-list {
+  list-style: none;
+  padding: 0;
+}
+
+.prompt-item {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.prompt-item a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.prompt-item h3 {
+  margin-top: 0;
 }
 
 
 
 
-import React from 'react';
-import { Link } from 'react-router-dom';
-import './HomePage.css';
-
-function HomePage() {
-  return (
-    <div className="home-page">
-      <header className="home-header">
-        <h1>Welcome to Content Supply Chain</h1>
-        <input type="text" placeholder="Search your document" className="search-input" />
-      </header>
-      <div className="cards-container">
-        <Link to="/create" className="card">
-          <h3>Creative Brief Copilot</h3>
-          <p>Auto-generate brief based on analytical outputs...</p>
-        </Link>
-        <div className="card">
-          <h3>Content Generation Copilot</h3>
-          <p>Leverage AI assistant to identify MLR-approved components...</p>
-        </div>
-        <div className="card">
-          <h3>Content Assembly Copilot</h3>
-          <p>Automate assembly of various creative and copy elements...</p>
-        </div>
-        <div className="card">
-          <h3>Content Localization Copilot</h3>
-          <p>Optimize content deliverables for local markets...</p>
-        </div>
-        <div className="card">
-          <h3>MLR Workflow Assistant</h3>
-          <p>Leverage GenAI-enhanced MLR workflows to ensure compliance...</p>
-        </div>
-      </div>
-    </div>
-  );
+.category-page {
+  padding: 20px;
 }
 
-export default HomePage;
-
-
-
-
-import React from 'react';
-import { NavLink } from 'react-router-dom';
-import './Sidebar.css';
-
-function Sidebar() {
-  return (
-    <aside className="sidebar">
-      <div className="sidebar-header">
-        <h2>Content Supply Chain</h2>
-      </div>
-      <nav>
-        <ul>
-          <li><NavLink exact to="/" activeClassName="active">Home</NavLink></li>
-          <li><NavLink to="/create" activeClassName="active">Create Prompt</NavLink></li>
-          <li><NavLink to="/prompts" activeClassName="active">All Prompts</NavLink></li>
-        </ul>
-      </nav>
-    </aside>
-  );
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
 }
 
-export default Sidebar;
-
-
-
-
-import React from 'react';
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import CreatePromptPage from './pages/CreatePromptPage';
-import PromptDetailPage from './pages/PromptDetailPage';
-import PromptListPage from './pages/PromptListPage';
-import Sidebar from './components/Sidebar';
-import './App.css';
-
-function App() {
-  return (
-    <Router>
-      <div className="App">
-        <Sidebar />
-        <main className="main-content">
-          <Switch>
-            <Route exact path="/" component={HomePage} />
-            <Route path="/create" component={CreatePromptPage} />
-            <Route path="/prompts/:id" component={PromptDetailPage} />
-            <Route path="/prompts" component={PromptListPage} />
-          </Switch>
-        </main>
-      </div>
-    </Router>
-  );
+label {
+  margin-bottom: 10px;
+  font-weight: bold;
 }
 
-export default App;
+input {
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px;
+  background-color: #61dafb;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer
+
+button:hover {
+  background-color: #21a1f1;
+}
+
+.category-list {
+  list-style: none;
+  padding: 0;
+  margin: 20px 0;
+}
+
+.category-item {
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+}
+
+
+.profile-page {
+  padding: 20px;
+}
+
+.profile-details {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.profile-details p {
+  margin: 10px 0;
+}
+
+
+.settings-page {
+  padding: 20px;
+}
+
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+select,
+input[type="checkbox"] {
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 10px;
+  background-color: #61dafb;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #21a1f1;
+}
+
+
+
+.marketing-insights-page {
+  padding: 20px;
+}
+
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+select {
+  padding: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+button {
+  padding: 10px;
+  background-color: #61dafb;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #21a1f1;
+}
+
+
+
+.upload-files-page {
+  padding: 20px;
+}
+
+form {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 600px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+input[type="file"] {
+  padding: 10px;
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 10px;
+  background-color: #61dafb;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #21a1f1;
+}
+
+
+
+
+
+
